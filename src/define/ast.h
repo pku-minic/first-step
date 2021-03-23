@@ -33,6 +33,15 @@ class FunDefAST : public BaseAST {
   ASTPtr body_;
 };
 
+// statement block
+class BlockAST : public BaseAST {
+ public:
+  BlockAST(ASTPtrList stmts) : stmts_(std::move(stmts)) {}
+
+ private:
+  ASTPtrList stmts_;
+};
+
 // assign statement
 class AssignAST : public BaseAST {
  public:
