@@ -11,8 +11,9 @@ ArgsDef     ::= IDENT {"," IDENT};
 
 Block       ::= "{" {Statement} "}";
 Statement   ::= IDENT "=" Expression
-              | "if" Expression Block ["else" Block]
+              | IfElse
               | "return" Expression;
+IfElse      ::= "if" Expression Block ["else" (IfElse | Block)];
 
 Expression  ::= LOrExpr;
 LOrExpr     ::= LAndExpr {"||" LAndExpr};
