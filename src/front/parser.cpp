@@ -65,6 +65,7 @@ ASTPtr Parser::ParseStatement() {
       }
       // fallthrough
     }
+    default:;
   }
   return LogError("invalid statement");
 }
@@ -193,6 +194,7 @@ ASTPtr Parser::ParseValue() {
       }
       // fallthrough
     }
+    default:;
   }
   return LogError("invalid value");
 }
@@ -210,7 +212,6 @@ ASTPtr Parser::ParseFunCall() {
       auto expr = ParseExpr();
       if (!expr) return nullptr;
       args.push_back(std::move(expr));
-      NextToken();
       // eat ','
       if (!IsTokenChar(',')) break;
       NextToken();
