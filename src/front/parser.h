@@ -35,6 +35,10 @@ class Parser {
   bool IsTokenKey(Keyword key) const {
     return cur_token_ == Token::Keyword && lexer_.key_val() == key;
   }
+  // check if the current token is the specific operator
+  bool IsTokenOp(Operator op) const {
+    return cur_token_ == Token::Operator && lexer_.op_val() == op;
+  }
 
   // print error message to stderr
   ASTPtr LogError(std::string_view message);
@@ -42,7 +46,7 @@ class Parser {
   ASTPtr ParseFunDef();
   ASTPtr ParseBlock();
   ASTPtr ParseStatement();
-  ASTPtr ParseAssign();
+  ASTPtr ParseDefineAssign();
   ASTPtr ParseIfElse();
   ASTPtr ParseReturn();
   ASTPtr ParseExpr();

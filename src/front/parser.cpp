@@ -55,7 +55,7 @@ ASTPtr Parser::ParseBlock() {
 
 ASTPtr Parser::ParseStatement() {
   switch (cur_token_) {
-    case Token::Id: return ParseAssign();
+    case Token::Id: return ParseDefineAssign();
     case Token::Keyword: {
       if (lexer_.key_val() == Keyword::If) {
         return ParseIfElse();
@@ -69,13 +69,20 @@ ASTPtr Parser::ParseStatement() {
   return LogError("invalid statement");
 }
 
-ASTPtr Parser::ParseAssign() {
+ASTPtr Parser::ParseDefineAssign() {
   // get name of variable
   auto name = lexer_.id_val();
+  NextToken();
+  // check if is define/assign
+  if (!IsTokenOp(Operator::Define) && !IsTokenOp(Operator::Assign)) {
+    return LogError("expected ':=' or '='");
+  }
+  bool is_define = lexer_.op_val() == Operator::Define;
   NextToken();
   // get expression
   auto expr = ParseExpr();
   if (!expr) return nullptr;
+  if (is_define) return std::make_unique<DefineAST>(name, std::move(expr));
   return std::make_unique<AssignAST>(name, std::move(expr));
 }
 
