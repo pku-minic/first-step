@@ -3,12 +3,6 @@
 #include <iostream>
 #include <algorithm>
 
-namespace {
-
-//
-
-}  // namespace
-
 ASTPtr Parser::LogError(std::string_view message) {
   std::cerr << "error(parser): " << message << std::endl;
   ++error_num_;
