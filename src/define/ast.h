@@ -1,6 +1,7 @@
 #ifndef FIRSTSTEP_DEFINE_AST_H_
 #define FIRSTSTEP_DEFINE_AST_H_
 
+#include <optional>
 #include <memory>
 #include <vector>
 #include <string>
@@ -8,12 +9,15 @@
 
 #include "define/token.h"
 
+// forwarded declarations
+class Interpreter;
+
 // base class of all ASTs
 class BaseAST {
  public:
   virtual ~BaseAST() = default;
 
-  // TODO
+  virtual std::optional<int> Eval(Interpreter &intp) const = 0;
 };
 
 // some type definitions
@@ -27,6 +31,8 @@ class FunDefAST : public BaseAST {
   FunDefAST(const std::string &name, IdList args, ASTPtr body)
       : name_(name), args_(std::move(args)), body_(std::move(body)) {}
 
+  std::optional<int> Eval(Interpreter &intp) const override;
+  
   // getters
   const std::string &name() const { return name_; }
   const IdList &args() const { return args_; }
@@ -43,6 +49,8 @@ class BlockAST : public BaseAST {
  public:
   BlockAST(ASTPtrList stmts) : stmts_(std::move(stmts)) {}
 
+  std::optional<int> Eval(Interpreter &intp) const override;
+  
   // getters
   const ASTPtrList &stmts() const { return stmts_; }
 
@@ -56,6 +64,8 @@ class AssignAST : public BaseAST {
   AssignAST(const std::string &name, ASTPtr expr)
       : name_(name), expr_(std::move(expr)) {}
 
+  std::optional<int> Eval(Interpreter &intp) const override;
+  
   // getters
   const std::string &name() const { return name_; }
   const ASTPtr &expr() const { return expr_; }
@@ -72,6 +82,8 @@ class IfAST : public BaseAST {
       : cond_(std::move(cond)), then_(std::move(then)),
         else_then_(std::move(else_then)) {}
 
+  std::optional<int> Eval(Interpreter &intp) const override;
+  
   // getters
   const ASTPtr &cond() const { return cond_; }
   const ASTPtr &then() const { return then_; }
@@ -86,6 +98,8 @@ class ReturnAST : public BaseAST {
  public:
   ReturnAST(ASTPtr expr) : expr_(std::move(expr)) {}
 
+  std::optional<int> Eval(Interpreter &intp) const override;
+  
   // getters
   const ASTPtr &expr() const { return expr_; }
 
@@ -99,6 +113,8 @@ class BinaryAST : public BaseAST {
   BinaryAST(Operator op, ASTPtr lhs, ASTPtr rhs)
       : op_(op), lhs_(std::move(lhs)), rhs_(std::move(rhs)) {}
 
+  std::optional<int> Eval(Interpreter &intp) const override;
+  
   // getters
   Operator op() const { return op_; }
   const ASTPtr &lhs() const { return lhs_; }
@@ -114,6 +130,8 @@ class UnaryAST : public BaseAST {
  public:
   UnaryAST(Operator op, ASTPtr opr) : op_(op), opr_(std::move(opr)) {}
 
+  std::optional<int> Eval(Interpreter &intp) const override;
+  
   // getters
   Operator op() const { return op_; }
   const ASTPtr &opr() const { return opr_; }
@@ -129,6 +147,8 @@ class FunCallAST : public BaseAST {
   FunCallAST(const std::string &name, ASTPtrList args)
       : name_(name), args_(std::move(args)) {}
 
+  std::optional<int> Eval(Interpreter &intp) const override;
+  
   // getters
   const std::string &name() const { return name_; }
   const ASTPtrList &args() const { return args_; }
@@ -143,6 +163,8 @@ class IntAST : public BaseAST {
  public:
   IntAST(int val) : val_(val) {}
 
+  std::optional<int> Eval(Interpreter &intp) const override;
+  
   // getters
   int val() const { return val_; }
 
@@ -155,6 +177,8 @@ class IdAST : public BaseAST {
  public:
   IdAST(const std::string &id) : id_(id) {}
 
+  std::optional<int> Eval(Interpreter &intp) const override;
+  
   // getters
   const std::string &id() const { return id_; }
 
