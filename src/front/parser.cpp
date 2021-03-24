@@ -74,6 +74,8 @@ ASTPtr Parser::ParseDefineAssign() {
   // get name of variable
   auto name = lexer_.id_val();
   NextToken();
+  // check if is a function call
+  if (IsTokenChar('(')) return ParseFunCall();
   // check if is define/assign
   if (!IsTokenOp(Operator::Define) && !IsTokenOp(Operator::Assign)) {
     return LogError("expected ':=' or '='");
