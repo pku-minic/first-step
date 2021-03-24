@@ -10,7 +10,8 @@ FunctionDef ::= IDENT "(" [ArgsDef] ")" Block;
 ArgsDef     ::= IDENT {"," IDENT};
 
 Block       ::= "{" {Statement} "}";
-Statement   ::= IDENT "=" Expression
+Statement   ::= IDENT ":=" Expression
+              | IDENT "=" Expression
               | IfElse
               | "return" Expression;
 IfElse      ::= "if" Expression Block ["else" (IfElse | Block)];
