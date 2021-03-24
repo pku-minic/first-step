@@ -10,6 +10,10 @@ std::optional<int> BlockAST::Eval(Interpreter &intp) const {
   return intp.EvalOn(*this);
 }
 
+std::optional<int> DefineAST::Eval(Interpreter &intp) const {
+  return intp.EvalOn(*this);
+}
+
 std::optional<int> AssignAST::Eval(Interpreter &intp) const {
   return intp.EvalOn(*this);
 }

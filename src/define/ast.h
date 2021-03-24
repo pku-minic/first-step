@@ -58,6 +58,23 @@ class BlockAST : public BaseAST {
   ASTPtrList stmts_;
 };
 
+// define statement
+class DefineAST : public BaseAST {
+ public:
+  DefineAST(const std::string &name, ASTPtr expr)
+      : name_(name), expr_(std::move(expr)) {}
+
+  std::optional<int> Eval(Interpreter &intp) const override;
+  
+  // getters
+  const std::string &name() const { return name_; }
+  const ASTPtr &expr() const { return expr_; }
+
+ private:
+  std::string name_;
+  ASTPtr expr_;
+};
+
 // assign statement
 class AssignAST : public BaseAST {
  public:
