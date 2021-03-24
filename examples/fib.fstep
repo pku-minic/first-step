@@ -1,0 +1,14 @@
+# calculate the nth term of the Fibonacci sequence
+fib(n) {
+  if n <= 2 {
+    return 1
+  }
+  else {
+    return fib(n - 1) + fib(n - 2)
+  }
+}
+
+main() {
+  print(fib(input()))
+  return 0
+}
