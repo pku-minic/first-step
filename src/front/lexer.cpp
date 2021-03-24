@@ -20,7 +20,7 @@ int GetIndex(std::string_view str, T (&str_array)[N]) {
 }
 
 bool IsOperatorChar(char c) {
-  const char op_chars[] = "+-*/%<=!&|";
+  const char op_chars[] = "+-*/%<=!&|:";
   for (const auto &i : op_chars) {
     if (i == c) return true;
   }

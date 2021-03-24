@@ -9,7 +9,7 @@
 #define FIRSTSTEP_OPERATORS(e) \
   e(Add, "+") e(Sub, "-") e(Mul, "*") e(Div, "/") e(Mod, "%") \
   e(Less, "<") e(LessEq, "<=") e(Eq, "==") e(NotEq, "!=") \
-  e(LAnd, "&&") e(LOr, "||") e(LNot, "!") e(Assign, "=")
+  e(LAnd, "&&") e(LOr, "||") e(LNot, "!") e(Define, ":=") e(Assign, "=")
 
 // expand first element to comma-separated list
 #define FIRSTSTEP_EXPAND_FIRST(i, ...)      i,
