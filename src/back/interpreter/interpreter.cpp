@@ -192,7 +192,7 @@ std::optional<int> Interpreter::EvalOn(const UnaryAST &ast) {
 std::optional<int> Interpreter::EvalOn(const FunCallAST &ast) {
   // handle library function call
   auto ret = CallLibFunction(ast.name(), ast.args());
-  if (ret) return ret;
+  if (error_num_ || ret) return ret;
   // find the specific function
   auto it = funcs_.find(ast.name());
   if (it == funcs_.end()) return LogError("function not found");
