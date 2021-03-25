@@ -184,8 +184,6 @@ std::optional<int> Interpreter::EvalOn(const BinaryAST &ast) {
       case Operator::LessEq: return *lhs <= *rhs;
       case Operator::Eq: return *lhs == *rhs;
       case Operator::NotEq: return *lhs != *rhs;
-      case Operator::LAnd: return *lhs && *rhs;
-      case Operator::LOr: return *lhs || *rhs;
       default: assert(false && "unknown binary operator");
     }
     return {};
