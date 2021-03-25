@@ -39,17 +39,24 @@ class FunctionDef {
   FunctionDef(const std::string &name, std::size_t arg_num)
       : name_(name), arg_num_(arg_num) {}
 
-  // push instruction to current function
-  void PushInst(InstPtr inst) { insts_.push_back(std::move(inst)); }
+  // create a new virtual register definition
+  ValPtr AddVirtReg();
+  // create & push instruction to current function
+  template <typename Inst, typename... Args>
+  void PushInst(Args &&...args) {
+    insts_.emplace_back(std::make_shared<Inst>(std::forward(args)...));
+  }
 
   // getters
   const std::string &name() const { return name_; }
   std::size_t arg_num() const { return arg_num_; }
+  const ValPtrList &vregs() const { return vregs_; }
   const InstPtrList &insts() const { return insts_; }
 
  private:
   std::string name_;
   std::size_t arg_num_;
+  ValPtrList vregs_;
   InstPtrList insts_;
 };
 
@@ -60,28 +67,31 @@ using FunDefPtr = std::shared_ptr<FunctionDef>;
 // assignment
 class AssignInst : public InstBase {
  public:
-  AssignInst(ValPtr vreg, ValPtr val)
-      : vreg_(std::move(vreg)), val_(std::move(val)) {}
+  AssignInst(ValPtr dest, ValPtr val)
+      : dest_(std::move(dest)), val_(std::move(val)) {}
 
   // getters
-  const ValPtr &vreg() const { return vreg_; }
+  const ValPtr &dest() const { return dest_; }
   const ValPtr &val() const { return val_; }
 
  private:
-  ValPtr vreg_, val_;
+  ValPtr dest_, val_;
 };
 
 // conditional branch
 class BranchInst : public InstBase {
  public:
-  BranchInst(ValPtr cond, ValPtr target)
-      : cond_(std::move(cond)), target_(std::move(target)) {}
+  BranchInst(bool bnez, ValPtr cond, ValPtr target)
+      : bnez_(bnez), cond_(std::move(cond)), target_(std::move(target)) {}
 
   // getters
+  // bnez (true) or beqz (false)
+  bool bnez() const { return bnez_; }
   const ValPtr &cond() const { return cond_; }
   const ValPtr &target() const { return target_; }
 
  private:
+  bool bnez_;
   ValPtr cond_, target_;
 };
 
@@ -112,14 +122,17 @@ class LabelInst : public InstBase {
 // function call
 class CallInst : public InstBase {
  public:
-  CallInst(FunDefPtr func, ValPtrList args)
-      : func_(std::move(func)), args_(std::move(args)) {}
+  CallInst(ValPtr dest, FunDefPtr func, ValPtrList args)
+      : dest_(std::move(dest)), func_(std::move(func)),
+        args_(std::move(args)) {}
 
   // getters
+  const ValPtr &dest() const { return dest_; }
   const FunDefPtr &func() const { return func_; }
   const ValPtrList &args() const { return args_; }
 
  private:
+  ValPtr dest_;
   FunDefPtr func_;
   ValPtrList args_;
 };
