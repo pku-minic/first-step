@@ -9,116 +9,200 @@
 
 #include "define/token.h"
 
-// base class of all IRs
-class IRBase {
+// base class of all instructions
+class InstBase {
  public:
-  virtual ~IRBase() = default;
+  virtual ~InstBase() = default;
 
   // TODO
 };
 
-// some type definitions
-using IRPtr = std::shared_ptr<IRBase>;
-using IRPtrList = std::vector<IRPtr>;
+// type definitions about instructions
+using InstPtr = std::shared_ptr<InstBase>;
+using InstPtrList = std::vector<InstPtr>;
+
+// base class of all values
+class ValueBase {
+ public:
+  virtual ~ValueBase() = default;
+
+  // TODO
+};
+
+// type definitions about values
+using ValPtr = std::shared_ptr<ValueBase>;
+using ValPtrList = std::vector<ValPtr>;
 
 // function definition
-class FunDefIR : public IRBase {
+class FunctionDef {
  public:
-  FunDefIR(const std::string &name, std::size_t arg_num, IRPtrList insts)
-      : name_(name), arg_num_(arg_num), insts_(std::move(insts)) {}
+  FunctionDef(const std::string &name, std::size_t arg_num)
+      : name_(name), arg_num_(arg_num) {}
+
+  // push instruction to current function
+  void PushInst(InstPtr inst) { insts_.push_back(std::move(inst)); }
+
+  // getters
+  const std::string &name() const { return name_; }
+  std::size_t arg_num() const { return arg_num_; }
+  const InstPtrList &insts() const { return insts_; }
 
  private:
   std::string name_;
   std::size_t arg_num_;
-  IRPtrList insts_;
+  InstPtrList insts_;
 };
 
+// type definitions about function definitions
+using FunDefPtr = std::shared_ptr<FunctionDef>;
+
+
 // assignment
-class AssignIR : public IRBase {
+class AssignInst : public InstBase {
  public:
-  AssignIR(IRPtr vreg, IRPtr val)
+  AssignInst(ValPtr vreg, ValPtr val)
       : vreg_(std::move(vreg)), val_(std::move(val)) {}
 
+  // getters
+  const ValPtr &vreg() const { return vreg_; }
+  const ValPtr &val() const { return val_; }
+
  private:
-  IRPtr vreg_, val_;
+  ValPtr vreg_, val_;
 };
 
 // conditional branch
-class BranchIR : public IRBase {
+class BranchInst : public InstBase {
  public:
-  BranchIR(IRPtr cond, IRPtr target)
+  BranchInst(ValPtr cond, ValPtr target)
       : cond_(std::move(cond)), target_(std::move(target)) {}
 
+  // getters
+  const ValPtr &cond() const { return cond_; }
+  const ValPtr &target() const { return target_; }
+
  private:
-  IRPtr cond_, target_;
+  ValPtr cond_, target_;
 };
 
 // unconditional jump
-class JumpIR : public IRBase {
+class JumpInst : public InstBase {
  public:
-  JumpIR(IRPtr target) : target_(std::move(target)) {}
+  JumpInst(ValPtr target) : target_(std::move(target)) {}
+
+  // getters
+  const ValPtr &target() const { return target_; }
 
  private:
-  IRPtr target_;
+  ValPtr target_;
+};
+
+// label definition
+class LabelInst : public InstBase {
+ public:
+  LabelInst(ValPtr label) : label_(std::move(label)) {}
+
+  // getters
+  const ValPtr &label() const { return label_; }
+
+ private:
+  ValPtr label_;
 };
 
 // function call
-class CallIR : public IRBase {
+class CallInst : public InstBase {
  public:
-  CallIR(IRPtr func, IRPtrList args)
+  CallInst(FunDefPtr func, ValPtrList args)
       : func_(std::move(func)), args_(std::move(args)) {}
 
+  // getters
+  const FunDefPtr &func() const { return func_; }
+  const ValPtrList &args() const { return args_; }
+
  private:
-  IRPtr func_;
-  IRPtrList args_;
+  FunDefPtr func_;
+  ValPtrList args_;
 };
 
 // function return
-class ReturnIR : public IRBase {
+class ReturnInst : public InstBase {
  public:
-  ReturnIR(IRPtr val) : val_(std::move(val)) {}
+  ReturnInst(ValPtr val) : val_(std::move(val)) {}
+
+  // getters
+  const ValPtr &val() const { return val_; }
 
  private:
-  IRPtr val_;
+  ValPtr val_;
 };
 
 // binary operation
-class BinaryIR : public IRBase {
+class BinaryInst : public InstBase {
  public:
-  BinaryIR(Operator op, IRPtr dest, IRPtr lhs, IRPtr rhs)
+  BinaryInst(Operator op, ValPtr dest, ValPtr lhs, ValPtr rhs)
       : op_(op), dest_(std::move(dest)),
         lhs_(std::move(lhs)), rhs_(std::move(rhs)) {}
 
+  // getters
+  Operator op() const { return op_; }
+  const ValPtr &dest() const { return dest_; }
+  const ValPtr &lhs() const { return lhs_; }
+  const ValPtr &rhs() const { return rhs_; }
+
  private:
   Operator op_;
-  IRPtr dest_, lhs_, rhs_;
+  ValPtr dest_, lhs_, rhs_;
 };
 
 // unary operation
-class UnaryIR : public IRBase {
+class UnaryInst : public InstBase {
  public:
-  UnaryIR(Operator op, IRPtr dest, IRPtr opr)
+  UnaryInst(Operator op, ValPtr dest, ValPtr opr)
       : op_(op), dest_(std::move(dest)), opr_(std::move(opr)) {}
+
+  // getters
+  Operator op() const { return op_; }
+  const ValPtr &dest() const { return dest_; }
+  const ValPtr &opr() const { return opr_; }
 
  private:
   Operator op_;
-  IRPtr dest_, opr_;
+  ValPtr dest_, opr_;
 };
 
+
 // virtual register
-class VirtRegIR : public IRBase {
+class VirtRegVal : public ValueBase {
  public:
-  VirtRegIR() : id_(next_id_++) {}
+  VirtRegVal() : id_(next_id_++) {}
+
+  // getters
+  std::size_t id() const { return id_; }
 
  private:
   static std::size_t next_id_;
   std::size_t id_;
 };
 
-// label
-class LabelIR : public IRBase {
+// argument reference
+class ArgRefVal : public ValueBase {
  public:
-  LabelIR() : id_(next_id_++) {}
+  ArgRefVal(std::size_t id) : id_(id) {}
+
+  // getters
+  std::size_t id() const { return id_; }
+
+ private:
+  std::size_t id_;
+};
+
+// label
+class LabelVal : public ValueBase {
+ public:
+  LabelVal() : id_(next_id_++) {}
+
+  // getters
+  std::size_t id() const { return id_; }
 
  private:
   static std::size_t next_id_;
@@ -126,9 +210,12 @@ class LabelIR : public IRBase {
 };
 
 // integer
-class IntIR : public IRBase {
+class IntVal : public ValueBase {
  public:
-  IntIR(int val) : val_(val) {}
+  IntVal(int val) : val_(val) {}
+
+  // getters
+  int val() const { return val_; }
 
  private:
   int val_;
