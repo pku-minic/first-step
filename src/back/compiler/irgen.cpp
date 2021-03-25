@@ -146,7 +146,10 @@ ValPtr IRGenerator::GenerateOn(const UnaryAST &ast) {
 ValPtr IRGenerator::GenerateOn(const FunCallAST &ast) {
   // get the function definition
   auto it = funcs_.find(ast.name());
-  if (it == funcs_.end()) return LogError("function not found");
+  if (it == funcs_.end()) {
+    it = lib_funcs_.find(ast.name());
+    if (it == lib_funcs_.end()) return LogError("function not found");
+  }
   // generate arguments
   if (ast.args().size() != it->second->arg_num()) {
     return LogError("argument count mismatch");

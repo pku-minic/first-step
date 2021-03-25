@@ -17,8 +17,8 @@ class IRGenerator {
  public:
   IRGenerator() : error_num_(0) {
     // register all of the library functions
-    funcs_.insert({"input", std::make_shared<FunctionDef>("input", 0)});
-    funcs_.insert({"print", std::make_shared<FunctionDef>("print", 1)});
+    lib_funcs_.insert({"input", std::make_shared<FunctionDef>("input", 0)});
+    lib_funcs_.insert({"print", std::make_shared<FunctionDef>("print", 1)});
   }
 
   // dump generated IRs
@@ -51,6 +51,8 @@ class IRGenerator {
   FunDefPtr func_;
   // all defined functions
   std::unordered_map<std::string_view, FunDefPtr> funcs_;
+  // all predefined library functions
+  std::unordered_map<std::string_view, FunDefPtr> lib_funcs_;
   // all defined variables (virtual registers)
   xstl::NestedMapPtr<std::string_view, ValPtr> vregs_;
 };
