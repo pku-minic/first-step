@@ -47,46 +47,46 @@ std::optional<int> IdAST::Eval(Interpreter &intp) const {
   return intp.EvalOn(*this);
 }
 
-IRPtr FunDefAST::GenerateIR(IRGenerator &gen) const {
+ValPtr FunDefAST::GenerateIR(IRGenerator &gen) const {
   return gen.GenerateOn(*this);
 }
 
-IRPtr BlockAST::GenerateIR(IRGenerator &gen) const {
+ValPtr BlockAST::GenerateIR(IRGenerator &gen) const {
   return gen.GenerateOn(*this);
 }
 
-IRPtr DefineAST::GenerateIR(IRGenerator &gen) const {
+ValPtr DefineAST::GenerateIR(IRGenerator &gen) const {
   return gen.GenerateOn(*this);
 }
 
-IRPtr AssignAST::GenerateIR(IRGenerator &gen) const {
+ValPtr AssignAST::GenerateIR(IRGenerator &gen) const {
   return gen.GenerateOn(*this);
 }
 
-IRPtr IfAST::GenerateIR(IRGenerator &gen) const {
+ValPtr IfAST::GenerateIR(IRGenerator &gen) const {
   return gen.GenerateOn(*this);
 }
 
-IRPtr ReturnAST::GenerateIR(IRGenerator &gen) const {
+ValPtr ReturnAST::GenerateIR(IRGenerator &gen) const {
   return gen.GenerateOn(*this);
 }
 
-IRPtr BinaryAST::GenerateIR(IRGenerator &gen) const {
+ValPtr BinaryAST::GenerateIR(IRGenerator &gen) const {
   return gen.GenerateOn(*this);
 }
 
-IRPtr UnaryAST::GenerateIR(IRGenerator &gen) const {
+ValPtr UnaryAST::GenerateIR(IRGenerator &gen) const {
   return gen.GenerateOn(*this);
 }
 
-IRPtr FunCallAST::GenerateIR(IRGenerator &gen) const {
+ValPtr FunCallAST::GenerateIR(IRGenerator &gen) const {
   return gen.GenerateOn(*this);
 }
 
-IRPtr IntAST::GenerateIR(IRGenerator &gen) const {
+ValPtr IntAST::GenerateIR(IRGenerator &gen) const {
   return gen.GenerateOn(*this);
 }
 
-IRPtr IdAST::GenerateIR(IRGenerator &gen) const {
+ValPtr IdAST::GenerateIR(IRGenerator &gen) const {
   return gen.GenerateOn(*this);
 }

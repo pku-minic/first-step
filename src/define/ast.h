@@ -20,7 +20,7 @@ class BaseAST {
   virtual ~BaseAST() = default;
 
   virtual std::optional<int> Eval(Interpreter &intp) const = 0;
-  virtual IRPtr GenerateIR(IRGenerator &gen) const = 0;
+  virtual ValPtr GenerateIR(IRGenerator &gen) const = 0;
 };
 
 // some type definitions
@@ -35,7 +35,7 @@ class FunDefAST : public BaseAST {
       : name_(name), args_(std::move(args)), body_(std::move(body)) {}
 
   std::optional<int> Eval(Interpreter &intp) const override;
-  IRPtr GenerateIR(IRGenerator &gen) const override;
+  ValPtr GenerateIR(IRGenerator &gen) const override;
 
   // getters
   const std::string &name() const { return name_; }
@@ -54,7 +54,7 @@ class BlockAST : public BaseAST {
   BlockAST(ASTPtrList stmts) : stmts_(std::move(stmts)) {}
 
   std::optional<int> Eval(Interpreter &intp) const override;
-  IRPtr GenerateIR(IRGenerator &gen) const override;
+  ValPtr GenerateIR(IRGenerator &gen) const override;
 
   // getters
   const ASTPtrList &stmts() const { return stmts_; }
@@ -70,7 +70,7 @@ class DefineAST : public BaseAST {
       : name_(name), expr_(std::move(expr)) {}
 
   std::optional<int> Eval(Interpreter &intp) const override;
-  IRPtr GenerateIR(IRGenerator &gen) const override;
+  ValPtr GenerateIR(IRGenerator &gen) const override;
 
   // getters
   const std::string &name() const { return name_; }
@@ -88,7 +88,7 @@ class AssignAST : public BaseAST {
       : name_(name), expr_(std::move(expr)) {}
 
   std::optional<int> Eval(Interpreter &intp) const override;
-  IRPtr GenerateIR(IRGenerator &gen) const override;
+  ValPtr GenerateIR(IRGenerator &gen) const override;
 
   // getters
   const std::string &name() const { return name_; }
@@ -107,7 +107,7 @@ class IfAST : public BaseAST {
         else_then_(std::move(else_then)) {}
 
   std::optional<int> Eval(Interpreter &intp) const override;
-  IRPtr GenerateIR(IRGenerator &gen) const override;
+  ValPtr GenerateIR(IRGenerator &gen) const override;
 
   // getters
   const ASTPtr &cond() const { return cond_; }
@@ -124,7 +124,7 @@ class ReturnAST : public BaseAST {
   ReturnAST(ASTPtr expr) : expr_(std::move(expr)) {}
 
   std::optional<int> Eval(Interpreter &intp) const override;
-  IRPtr GenerateIR(IRGenerator &gen) const override;
+  ValPtr GenerateIR(IRGenerator &gen) const override;
 
   // getters
   const ASTPtr &expr() const { return expr_; }
@@ -140,7 +140,7 @@ class BinaryAST : public BaseAST {
       : op_(op), lhs_(std::move(lhs)), rhs_(std::move(rhs)) {}
 
   std::optional<int> Eval(Interpreter &intp) const override;
-  IRPtr GenerateIR(IRGenerator &gen) const override;
+  ValPtr GenerateIR(IRGenerator &gen) const override;
 
   // getters
   Operator op() const { return op_; }
@@ -158,7 +158,7 @@ class UnaryAST : public BaseAST {
   UnaryAST(Operator op, ASTPtr opr) : op_(op), opr_(std::move(opr)) {}
 
   std::optional<int> Eval(Interpreter &intp) const override;
-  IRPtr GenerateIR(IRGenerator &gen) const override;
+  ValPtr GenerateIR(IRGenerator &gen) const override;
 
   // getters
   Operator op() const { return op_; }
@@ -176,7 +176,7 @@ class FunCallAST : public BaseAST {
       : name_(name), args_(std::move(args)) {}
 
   std::optional<int> Eval(Interpreter &intp) const override;
-  IRPtr GenerateIR(IRGenerator &gen) const override;
+  ValPtr GenerateIR(IRGenerator &gen) const override;
 
   // getters
   const std::string &name() const { return name_; }
@@ -193,7 +193,7 @@ class IntAST : public BaseAST {
   IntAST(int val) : val_(val) {}
 
   std::optional<int> Eval(Interpreter &intp) const override;
-  IRPtr GenerateIR(IRGenerator &gen) const override;
+  ValPtr GenerateIR(IRGenerator &gen) const override;
 
   // getters
   int val() const { return val_; }
@@ -208,7 +208,7 @@ class IdAST : public BaseAST {
   IdAST(const std::string &id) : id_(id) {}
 
   std::optional<int> Eval(Interpreter &intp) const override;
-  IRPtr GenerateIR(IRGenerator &gen) const override;
+  ValPtr GenerateIR(IRGenerator &gen) const override;
 
   // getters
   const std::string &id() const { return id_; }
