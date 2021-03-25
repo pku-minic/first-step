@@ -1,6 +1,7 @@
 #ifndef FIRSTSTEP_BACK_COMPILER_IRGEN_H_
 #define FIRSTSTEP_BACK_COMPILER_IRGEN_H_
 
+#include <ostream>
 #include <string_view>
 #include <unordered_map>
 #include <utility>
@@ -14,7 +15,14 @@
 
 class IRGenerator {
  public:
-  IRGenerator() : error_num_(0) {}
+  IRGenerator() : error_num_(0) {
+    // register all of the library functions
+    funcs_.insert({"input", std::make_shared<FunctionDef>("input", 0)});
+    funcs_.insert({"print", std::make_shared<FunctionDef>("print", 1)});
+  }
+
+  // dump generated IRs
+  void Dump(std::ostream &os) const;
 
   // visitor methods
   ValPtr GenerateOn(const FunDefAST &ast);

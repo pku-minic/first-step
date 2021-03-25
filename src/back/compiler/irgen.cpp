@@ -13,6 +13,10 @@ xstl::Guard IRGenerator::NewEnvironment() {
   return xstl::Guard([this] { vregs_ = vregs_->outer(); });
 }
 
+void IRGenerator::Dump(std::ostream &os) const {
+  for (const auto &it : funcs_) it.second->Dump(os);
+}
+
 ValPtr IRGenerator::GenerateOn(const FunDefAST &ast) {
   // create function definition IR
   func_ = std::make_shared<FunctionDef>(ast.name(), ast.args().size());
@@ -135,7 +139,7 @@ ValPtr IRGenerator::GenerateOn(const UnaryAST &ast) {
   if (!opr) return nullptr;
   // generate unary operation
   auto dest = func_->AddVirtReg();
-  func_->PushInst<BinaryInst>(ast.op(), dest, std::move(opr));
+  func_->PushInst<UnaryInst>(ast.op(), dest, std::move(opr));
   return dest;
 }
 
@@ -144,6 +148,9 @@ ValPtr IRGenerator::GenerateOn(const FunCallAST &ast) {
   auto it = funcs_.find(ast.name());
   if (it == funcs_.end()) return LogError("function not found");
   // generate arguments
+  if (ast.args().size() != it->second->arg_num()) {
+    return LogError("argument count mismatch");
+  }
   ValPtrList args;
   for (const auto &i : ast.args()) {
     auto arg = i->GenerateIR(*this);
