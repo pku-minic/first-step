@@ -21,7 +21,7 @@ class IRGenerator {
     lib_funcs_.insert({"print", std::make_shared<FunctionDef>("print", 1)});
   }
 
-  // dump generated IRs
+  // dump RISC-V assembly of all generated IRs
   void Dump(std::ostream &os) const;
 
   // visitor methods
@@ -53,8 +53,8 @@ class IRGenerator {
   std::unordered_map<std::string_view, FunDefPtr> funcs_;
   // all predefined library functions
   std::unordered_map<std::string_view, FunDefPtr> lib_funcs_;
-  // all defined variables (virtual registers)
-  xstl::NestedMapPtr<std::string_view, ValPtr> vregs_;
+  // all defined variables (stack slots)
+  xstl::NestedMapPtr<std::string_view, ValPtr> vars_;
 };
 
 #endif  // FIRSTSTEP_BACK_COMPILER_IRGEN_H_

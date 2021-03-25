@@ -9,8 +9,8 @@ ValPtr IRGenerator::LogError(std::string_view message) {
 }
 
 xstl::Guard IRGenerator::NewEnvironment() {
-  vregs_ = xstl::MakeNestedMap(vregs_);
-  return xstl::Guard([this] { vregs_ = vregs_->outer(); });
+  vars_ = xstl::MakeNestedMap(vars_);
+  return xstl::Guard([this] { vars_ = vars_->outer(); });
 }
 
 void IRGenerator::Dump(std::ostream &os) const {
@@ -18,6 +18,10 @@ void IRGenerator::Dump(std::ostream &os) const {
 }
 
 ValPtr IRGenerator::GenerateOn(const FunDefAST &ast) {
+  // check argument count
+  if (ast.args().size() > 8) {
+    return LogError("argument count must be less than or equal to 8");
+  }
   // create function definition IR
   func_ = std::make_shared<FunctionDef>(ast.name(), ast.args().size());
   // add to function map
@@ -28,7 +32,7 @@ ValPtr IRGenerator::GenerateOn(const FunDefAST &ast) {
   auto env = NewEnvironment();
   // add definitions of arguments
   for (std::size_t i = 0; i < ast.args().size(); ++i) {
-    vregs_->AddItem(ast.args()[i], std::make_shared<ArgRefVal>(i));
+    vars_->AddItem(ast.args()[i], std::make_shared<ArgRefVal>(i));
   }
   // generate body
   ast.body()->GenerateIR(*this);
@@ -51,12 +55,12 @@ ValPtr IRGenerator::GenerateOn(const DefineAST &ast) {
   auto expr = ast.expr()->GenerateIR(*this);
   if (!expr) return nullptr;
   // add symbol definition
-  auto vreg = func_->AddVirtReg();
-  if (!vregs_->AddItem(ast.name(), vreg)) {
+  auto slot = func_->AddSlot();
+  if (!vars_->AddItem(ast.name(), slot)) {
     return LogError("symbol has already been defined");
   }
   // generate assign instruction
-  func_->PushInst<AssignInst>(std::move(vreg), std::move(expr));
+  func_->PushInst<AssignInst>(std::move(slot), std::move(expr));
   return nullptr;
 }
 
@@ -64,11 +68,11 @@ ValPtr IRGenerator::GenerateOn(const AssignAST &ast) {
   // generate expression
   auto expr = ast.expr()->GenerateIR(*this);
   if (!expr) return nullptr;
-  // get virtual register of the symbol
-  auto vreg = vregs_->GetItem(ast.name());
-  if (!vreg) return LogError("symbol has not been defined");
+  // get stack slot of the symbol
+  auto slot = vars_->GetItem(ast.name());
+  if (!slot) return LogError("symbol has not been defined");
   // generate assign instruction
-  func_->PushInst<AssignInst>(std::move(vreg), std::move(expr));
+  func_->PushInst<AssignInst>(std::move(slot), std::move(expr));
   return nullptr;
 }
 
@@ -126,7 +130,7 @@ ValPtr IRGenerator::GenerateOn(const BinaryAST &ast) {
     auto rhs = ast.rhs()->GenerateIR(*this);
     if (!lhs || !rhs) return nullptr;
     // generate binary operation
-    auto dest = func_->AddVirtReg();
+    auto dest = func_->AddSlot();
     func_->PushInst<BinaryInst>(ast.op(), dest, std::move(lhs),
                                 std::move(rhs));
     return dest;
@@ -138,7 +142,7 @@ ValPtr IRGenerator::GenerateOn(const UnaryAST &ast) {
   auto opr = ast.opr()->GenerateIR(*this);
   if (!opr) return nullptr;
   // generate unary operation
-  auto dest = func_->AddVirtReg();
+  auto dest = func_->AddSlot();
   func_->PushInst<UnaryInst>(ast.op(), dest, std::move(opr));
   return dest;
 }
@@ -150,10 +154,11 @@ ValPtr IRGenerator::GenerateOn(const FunCallAST &ast) {
     it = lib_funcs_.find(ast.name());
     if (it == lib_funcs_.end()) return LogError("function not found");
   }
-  // generate arguments
+  // check argument count
   if (ast.args().size() != it->second->arg_num()) {
     return LogError("argument count mismatch");
   }
+  // generate arguments
   ValPtrList args;
   for (const auto &i : ast.args()) {
     auto arg = i->GenerateIR(*this);
@@ -161,7 +166,7 @@ ValPtr IRGenerator::GenerateOn(const FunCallAST &ast) {
     args.push_back(std::move(arg));
   }
   // generate function call
-  auto dest = func_->AddVirtReg();
+  auto dest = func_->AddSlot();
   func_->PushInst<CallInst>(dest, it->second, std::move(args));
   return dest;
 }
@@ -171,8 +176,8 @@ ValPtr IRGenerator::GenerateOn(const IntAST &ast) {
 }
 
 ValPtr IRGenerator::GenerateOn(const IdAST &ast) {
-  // get virtual register of the symbol
-  auto vreg = vregs_->GetItem(ast.id());
-  if (!vreg) return LogError("symbol has not been defined");
-  return vreg;
+  // get stack slot of the symbol
+  auto slot = vars_->GetItem(ast.id());
+  if (!slot) return LogError("symbol has not been defined");
+  return slot;
 }
