@@ -6,16 +6,21 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <unordered_map>
 #include <cstddef>
 
 #include "define/token.h"
+
+// forwarded declaration of function definition
+class FunctionDef;
 
 // base class of all instructions
 class InstBase {
  public:
   virtual ~InstBase() = default;
 
-  virtual void Dump(std::ostream &os) const = 0;
+  // dump RISC-V assembly of the current instruction
+  virtual void Dump(std::ostream &os, const FunctionDef &func) const = 0;
 };
 
 // type definitions about instructions
@@ -27,7 +32,10 @@ class ValueBase {
  public:
   virtual ~ValueBase() = default;
 
-  virtual void Dump(std::ostream &os) const = 0;
+  // dump RISC-V assembly of read operation
+  virtual void DumpRead(std::ostream &os) const = 0;
+  // dump RISC-V assembly of write operation
+  virtual void DumpWrite(std::ostream &os) const = 0;
 };
 
 // type definitions about values
@@ -38,10 +46,8 @@ using ValPtrList = std::vector<ValPtr>;
 class FunctionDef {
  public:
   FunctionDef(const std::string &name, std::size_t arg_num)
-      : name_(name), arg_num_(arg_num) {}
+      : name_(name), arg_num_(arg_num), slot_num_(0) {}
 
-  // create a new virtual register definition
-  ValPtr AddVirtReg();
   // create & push instruction to current function
   template <typename Inst, typename... Args>
   void PushInst(Args &&...args) {
@@ -49,20 +55,22 @@ class FunctionDef {
         std::make_shared<Inst>(std::forward<Args>(args)...));
   }
 
-  // dump the content of function
+  // create a new stack slot definition
+  ValPtr AddSlot();
+  // dump RISC-V assembly of the current function
   void Dump(std::ostream &os) const;
 
   // getters
   const std::string &name() const { return name_; }
   std::size_t arg_num() const { return arg_num_; }
-  const ValPtrList &vregs() const { return vregs_; }
-  // empty if is library function ('input' and 'print')
-  const InstPtrList &insts() const { return insts_; }
+  std::size_t slot_offset() const {
+    return ((arg_num_ + slot_num_) / 4 + 1) * 16;
+  }
 
  private:
   std::string name_;
-  std::size_t arg_num_;
-  ValPtrList vregs_;
+  std::size_t arg_num_, slot_num_;
+  // empty if is library function ('input' and 'print')
   InstPtrList insts_;
 };
 
@@ -76,11 +84,7 @@ class AssignInst : public InstBase {
   AssignInst(ValPtr dest, ValPtr val)
       : dest_(std::move(dest)), val_(std::move(val)) {}
 
-  void Dump(std::ostream &os) const override;
-  
-  // getters
-  const ValPtr &dest() const { return dest_; }
-  const ValPtr &val() const { return val_; }
+  void Dump(std::ostream &os, const FunctionDef &func) const override;
 
  private:
   ValPtr dest_, val_;
@@ -89,34 +93,26 @@ class AssignInst : public InstBase {
 // conditional branch
 class BranchInst : public InstBase {
  public:
-  BranchInst(bool bnez, ValPtr cond, ValPtr target)
-      : bnez_(bnez), cond_(std::move(cond)), target_(std::move(target)) {}
+  BranchInst(bool bnez, ValPtr cond, ValPtr label)
+      : bnez_(bnez), cond_(std::move(cond)), label_(std::move(label)) {}
 
-  void Dump(std::ostream &os) const override;
-  
-  // getters
-  // bnez (true) or beqz (false)
-  bool bnez() const { return bnez_; }
-  const ValPtr &cond() const { return cond_; }
-  const ValPtr &target() const { return target_; }
+  void Dump(std::ostream &os, const FunctionDef &func) const override;
 
  private:
+  // bnez (true) or beqz (false)
   bool bnez_;
-  ValPtr cond_, target_;
+  ValPtr cond_, label_;
 };
 
 // unconditional jump
 class JumpInst : public InstBase {
  public:
-  JumpInst(ValPtr target) : target_(std::move(target)) {}
+  JumpInst(ValPtr label) : label_(std::move(label)) {}
 
-  void Dump(std::ostream &os) const override;
-  
-  // getters
-  const ValPtr &target() const { return target_; }
+  void Dump(std::ostream &os, const FunctionDef &func) const override;
 
  private:
-  ValPtr target_;
+  ValPtr label_;
 };
 
 // label definition
@@ -124,10 +120,7 @@ class LabelInst : public InstBase {
  public:
   LabelInst(ValPtr label) : label_(std::move(label)) {}
 
-  void Dump(std::ostream &os) const override;
-  
-  // getters
-  const ValPtr &label() const { return label_; }
+  void Dump(std::ostream &os, const FunctionDef &func) const override;
 
  private:
   ValPtr label_;
@@ -140,12 +133,7 @@ class CallInst : public InstBase {
       : dest_(std::move(dest)), func_(std::move(func)),
         args_(std::move(args)) {}
 
-  void Dump(std::ostream &os) const override;
-  
-  // getters
-  const ValPtr &dest() const { return dest_; }
-  const FunDefPtr &func() const { return func_; }
-  const ValPtrList &args() const { return args_; }
+  void Dump(std::ostream &os, const FunctionDef &func) const override;
 
  private:
   ValPtr dest_;
@@ -158,10 +146,7 @@ class ReturnInst : public InstBase {
  public:
   ReturnInst(ValPtr val) : val_(std::move(val)) {}
 
-  void Dump(std::ostream &os) const override;
-  
-  // getters
-  const ValPtr &val() const { return val_; }
+  void Dump(std::ostream &os, const FunctionDef &func) const override;
 
  private:
   ValPtr val_;
@@ -174,13 +159,7 @@ class BinaryInst : public InstBase {
       : op_(op), dest_(std::move(dest)),
         lhs_(std::move(lhs)), rhs_(std::move(rhs)) {}
 
-  void Dump(std::ostream &os) const override;
-  
-  // getters
-  Operator op() const { return op_; }
-  const ValPtr &dest() const { return dest_; }
-  const ValPtr &lhs() const { return lhs_; }
-  const ValPtr &rhs() const { return rhs_; }
+  void Dump(std::ostream &os, const FunctionDef &func) const override;
 
  private:
   Operator op_;
@@ -193,12 +172,7 @@ class UnaryInst : public InstBase {
   UnaryInst(Operator op, ValPtr dest, ValPtr opr)
       : op_(op), dest_(std::move(dest)), opr_(std::move(opr)) {}
 
-  void Dump(std::ostream &os) const override;
-  
-  // getters
-  Operator op() const { return op_; }
-  const ValPtr &dest() const { return dest_; }
-  const ValPtr &opr() const { return opr_; }
+  void Dump(std::ostream &os, const FunctionDef &func) const override;
 
  private:
   Operator op_;
@@ -206,18 +180,15 @@ class UnaryInst : public InstBase {
 };
 
 
-// virtual register
-class VirtRegVal : public ValueBase {
+// stack slot
+class SlotVal : public ValueBase {
  public:
-  VirtRegVal() : id_(next_id_++) {}
+  SlotVal(std::size_t id) : id_(id) {}
 
-  void Dump(std::ostream &os) const override;
-  
-  // getters
-  std::size_t id() const { return id_; }
+  void DumpRead(std::ostream &os) const override;
+  void DumpWrite(std::ostream &os) const override;
 
  private:
-  static std::size_t next_id_;
   std::size_t id_;
 };
 
@@ -226,10 +197,8 @@ class ArgRefVal : public ValueBase {
  public:
   ArgRefVal(std::size_t id) : id_(id) {}
 
-  void Dump(std::ostream &os) const override;
-  
-  // getters
-  std::size_t id() const { return id_; }
+  void DumpRead(std::ostream &os) const override;
+  void DumpWrite(std::ostream &os) const override;
 
  private:
   std::size_t id_;
@@ -240,10 +209,8 @@ class LabelVal : public ValueBase {
  public:
   LabelVal() : id_(next_id_++) {}
 
-  void Dump(std::ostream &os) const override;
-  
-  // getters
-  std::size_t id() const { return id_; }
+  void DumpRead(std::ostream &os) const override;
+  void DumpWrite(std::ostream &os) const override;
 
  private:
   static std::size_t next_id_;
@@ -255,10 +222,8 @@ class IntVal : public ValueBase {
  public:
   IntVal(int val) : val_(val) {}
 
-  void Dump(std::ostream &os) const override;
-  
-  // getters
-  int val() const { return val_; }
+  void DumpRead(std::ostream &os) const override;
+  void DumpWrite(std::ostream &os) const override;
 
  private:
   int val_;
