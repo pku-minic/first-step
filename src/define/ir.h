@@ -1,6 +1,7 @@
 #ifndef FIRSTSTEP_DEFINE_IR_H_
 #define FIRSTSTEP_DEFINE_IR_H_
 
+#include <ostream>
 #include <memory>
 #include <vector>
 #include <string>
@@ -14,7 +15,7 @@ class InstBase {
  public:
   virtual ~InstBase() = default;
 
-  // TODO
+  virtual void Dump(std::ostream &os) const = 0;
 };
 
 // type definitions about instructions
@@ -26,7 +27,7 @@ class ValueBase {
  public:
   virtual ~ValueBase() = default;
 
-  // TODO
+  virtual void Dump(std::ostream &os) const = 0;
 };
 
 // type definitions about values
@@ -44,13 +45,18 @@ class FunctionDef {
   // create & push instruction to current function
   template <typename Inst, typename... Args>
   void PushInst(Args &&...args) {
-    insts_.emplace_back(std::make_shared<Inst>(std::forward(args)...));
+    insts_.emplace_back(
+        std::make_shared<Inst>(std::forward<Args>(args)...));
   }
+
+  // dump the content of function
+  void Dump(std::ostream &os) const;
 
   // getters
   const std::string &name() const { return name_; }
   std::size_t arg_num() const { return arg_num_; }
   const ValPtrList &vregs() const { return vregs_; }
+  // empty if is library function ('input' and 'print')
   const InstPtrList &insts() const { return insts_; }
 
  private:
@@ -70,6 +76,8 @@ class AssignInst : public InstBase {
   AssignInst(ValPtr dest, ValPtr val)
       : dest_(std::move(dest)), val_(std::move(val)) {}
 
+  void Dump(std::ostream &os) const override;
+  
   // getters
   const ValPtr &dest() const { return dest_; }
   const ValPtr &val() const { return val_; }
@@ -84,6 +92,8 @@ class BranchInst : public InstBase {
   BranchInst(bool bnez, ValPtr cond, ValPtr target)
       : bnez_(bnez), cond_(std::move(cond)), target_(std::move(target)) {}
 
+  void Dump(std::ostream &os) const override;
+  
   // getters
   // bnez (true) or beqz (false)
   bool bnez() const { return bnez_; }
@@ -100,6 +110,8 @@ class JumpInst : public InstBase {
  public:
   JumpInst(ValPtr target) : target_(std::move(target)) {}
 
+  void Dump(std::ostream &os) const override;
+  
   // getters
   const ValPtr &target() const { return target_; }
 
@@ -112,6 +124,8 @@ class LabelInst : public InstBase {
  public:
   LabelInst(ValPtr label) : label_(std::move(label)) {}
 
+  void Dump(std::ostream &os) const override;
+  
   // getters
   const ValPtr &label() const { return label_; }
 
@@ -126,6 +140,8 @@ class CallInst : public InstBase {
       : dest_(std::move(dest)), func_(std::move(func)),
         args_(std::move(args)) {}
 
+  void Dump(std::ostream &os) const override;
+  
   // getters
   const ValPtr &dest() const { return dest_; }
   const FunDefPtr &func() const { return func_; }
@@ -142,6 +158,8 @@ class ReturnInst : public InstBase {
  public:
   ReturnInst(ValPtr val) : val_(std::move(val)) {}
 
+  void Dump(std::ostream &os) const override;
+  
   // getters
   const ValPtr &val() const { return val_; }
 
@@ -156,6 +174,8 @@ class BinaryInst : public InstBase {
       : op_(op), dest_(std::move(dest)),
         lhs_(std::move(lhs)), rhs_(std::move(rhs)) {}
 
+  void Dump(std::ostream &os) const override;
+  
   // getters
   Operator op() const { return op_; }
   const ValPtr &dest() const { return dest_; }
@@ -173,6 +193,8 @@ class UnaryInst : public InstBase {
   UnaryInst(Operator op, ValPtr dest, ValPtr opr)
       : op_(op), dest_(std::move(dest)), opr_(std::move(opr)) {}
 
+  void Dump(std::ostream &os) const override;
+  
   // getters
   Operator op() const { return op_; }
   const ValPtr &dest() const { return dest_; }
@@ -189,6 +211,8 @@ class VirtRegVal : public ValueBase {
  public:
   VirtRegVal() : id_(next_id_++) {}
 
+  void Dump(std::ostream &os) const override;
+  
   // getters
   std::size_t id() const { return id_; }
 
@@ -202,6 +226,8 @@ class ArgRefVal : public ValueBase {
  public:
   ArgRefVal(std::size_t id) : id_(id) {}
 
+  void Dump(std::ostream &os) const override;
+  
   // getters
   std::size_t id() const { return id_; }
 
@@ -214,6 +240,8 @@ class LabelVal : public ValueBase {
  public:
   LabelVal() : id_(next_id_++) {}
 
+  void Dump(std::ostream &os) const override;
+  
   // getters
   std::size_t id() const { return id_; }
 
@@ -227,6 +255,8 @@ class IntVal : public ValueBase {
  public:
   IntVal(int val) : val_(val) {}
 
+  void Dump(std::ostream &os) const override;
+  
   // getters
   int val() const { return val_; }
 
