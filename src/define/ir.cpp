@@ -26,6 +26,7 @@ void FunctionDef::Dump(std::ostream &os) const {
   // dump prologue
   os << "  addi sp, sp, -" << slot_offset() << std::endl;
   os << "  sw ra, " << (slot_offset() - 4) << "(sp)" << std::endl;
+  assert(arg_num_ <= 8 && "argument count is greater than 8");
   for (std::size_t i = 0; i < arg_num_; ++i) {
     os << "  sw s" << i << ", " << (slot_offset() - 4 * (i + 2)) << "(sp)"
        << std::endl;
@@ -61,6 +62,7 @@ void LabelInst::Dump(std::ostream &os, const FunctionDef &func) const {
 
 void CallInst::Dump(std::ostream &os, const FunctionDef &func) const {
   // generate arguments
+  assert(args_.size() <= 8 && "argument count is greater than 8");
   for (std::size_t i = 0; i < args_.size(); ++i) {
     args_[i]->DumpRead(os);
     os << "  mv a" << i << ", " << kResultReg << std::endl;
@@ -76,6 +78,7 @@ void ReturnInst::Dump(std::ostream &os, const FunctionDef &func) const {
   val_->DumpRead(os);
   os << "  mv a0, " << kResultReg << std::endl;
   // dump epilogue
+  assert(func.arg_num() <= 8 && "argument count is greater than 8");
   for (std::size_t i = 0; i < func.arg_num(); ++i) {
     os << "  lw s" << i << ", " << (func.slot_offset() - 4 * (i + 2))
        << "(sp)" << std::endl;
