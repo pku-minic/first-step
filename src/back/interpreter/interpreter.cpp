@@ -158,25 +158,38 @@ std::optional<int> Interpreter::EvalOn(const ReturnAST &ast) {
 }
 
 std::optional<int> Interpreter::EvalOn(const BinaryAST &ast) {
-  // evaluate the lhs & rhs
-  auto lhs = ast.lhs()->Eval(*this), rhs = ast.rhs()->Eval(*this);
-  if (!lhs || !rhs) return {};
-  // perform binary operation
-  switch (ast.op()) {
-    case Operator::Add: return *lhs + *rhs;
-    case Operator::Sub: return *lhs - *rhs;
-    case Operator::Mul: return *lhs * *rhs;
-    case Operator::Div: return *lhs / *rhs;
-    case Operator::Mod: return *lhs % *rhs;
-    case Operator::Less: return *lhs < *rhs;
-    case Operator::LessEq: return *lhs <= *rhs;
-    case Operator::Eq: return *lhs == *rhs;
-    case Operator::NotEq: return *lhs != *rhs;
-    case Operator::LAnd: return *lhs && *rhs;
-    case Operator::LOr: return *lhs || *rhs;
-    default: assert(false && "unknown binary operator");
+  // check if is logical operator
+  if (ast.op() == Operator::LAnd || ast.op() == Operator::LOr) {
+    // evaluate lhs first
+    auto lhs = ast.lhs()->Eval(*this);
+    if (!lhs || (ast.op() == Operator::LAnd && !*lhs) ||
+        (ast.op() == Operator::LOr && *lhs)) {
+      return lhs;
+    }
+    // then evaluate rhs
+    return ast.rhs()->Eval(*this);
   }
-  return {};
+  else {
+    // evaluate the lhs & rhs
+    auto lhs = ast.lhs()->Eval(*this), rhs = ast.rhs()->Eval(*this);
+    if (!lhs || !rhs) return {};
+    // perform binary operation
+    switch (ast.op()) {
+      case Operator::Add: return *lhs + *rhs;
+      case Operator::Sub: return *lhs - *rhs;
+      case Operator::Mul: return *lhs * *rhs;
+      case Operator::Div: return *lhs / *rhs;
+      case Operator::Mod: return *lhs % *rhs;
+      case Operator::Less: return *lhs < *rhs;
+      case Operator::LessEq: return *lhs <= *rhs;
+      case Operator::Eq: return *lhs == *rhs;
+      case Operator::NotEq: return *lhs != *rhs;
+      case Operator::LAnd: return *lhs && *rhs;
+      case Operator::LOr: return *lhs || *rhs;
+      default: assert(false && "unknown binary operator");
+    }
+    return {};
+  }
 }
 
 std::optional<int> Interpreter::EvalOn(const UnaryAST &ast) {
