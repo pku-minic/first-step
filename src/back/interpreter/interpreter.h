@@ -9,6 +9,7 @@
 #include "define/ast.h"
 
 #include "xstl/nested.h"
+#include "xstl/guard.h"
 
 class Interpreter {
  public:
@@ -43,6 +44,8 @@ class Interpreter {
 
   // print error message to stderr
   std::optional<int> LogError(std::string_view message);
+  // enter a new environment
+  xstl::Guard NewEnvironment();
   // perform library function call
   std::optional<int> CallLibFunction(std::string_view name,
                                      const ASTPtrList &args);

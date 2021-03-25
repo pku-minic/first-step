@@ -9,6 +9,11 @@ std::optional<int> Interpreter::LogError(std::string_view message) {
   return {};
 }
 
+xstl::Guard Interpreter::NewEnvironment() {
+  envs_ = xstl::MakeNestedMap(envs_);
+  return xstl::Guard([this] { envs_ = envs_->outer(); });
+}
+
 std::optional<int> Interpreter::CallLibFunction(std::string_view name,
                                                 const ASTPtrList &args) {
   if (name == "input") {
@@ -83,15 +88,13 @@ std::optional<int> Interpreter::EvalOn(const FunDefAST &ast) {
 
 std::optional<int> Interpreter::EvalOn(const BlockAST &ast) {
   // enter a new environment
-  envs_ = xstl::MakeNestedMap(envs_);
+  auto env = NewEnvironment();
   // evaluate all statements in block
   for (const auto &stmt : ast.stmts()) {
     stmt->Eval(*this);
     // stop if there is an error
     if (error_num_) return {};
   }
-  // exit the current environment
-  envs_ = envs_->outer();
   return {};
 }
 
@@ -197,7 +200,7 @@ std::optional<int> Interpreter::EvalOn(const FunCallAST &ast) {
   auto it = funcs_.find(ast.name());
   if (it == funcs_.end()) return LogError("function not found");
   // make a new environment for arguments
-  envs_ = xstl::MakeNestedMap(envs_);
+  auto env = NewEnvironment();
   // evaluate arguments
   const auto &func_args = static_cast<FunDefAST *>(it->second.get())->args();
   if (ast.args().size() != func_args.size()) {
@@ -213,11 +216,7 @@ std::optional<int> Interpreter::EvalOn(const FunCallAST &ast) {
     }
   }
   // call the specific function
-  ret = it->second->Eval(*this);
-  if (!ret) return {};
-  // exit the environment of arguments
-  envs_ = envs_->outer();
-  return ret;
+  return it->second->Eval(*this);
 }
 
 std::optional<int> Interpreter::EvalOn(const IntAST &ast) {
