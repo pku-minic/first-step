@@ -28,7 +28,7 @@ void Interpret(istream &in) {
   exit(*ret);
 }
 
-void Compile(istream &in) {
+void Compile(istream &in, ostream &os) {
   // create lexer, parser and IR generator
   Lexer lexer(in);
   Parser parser(lexer);
@@ -42,16 +42,27 @@ void Compile(istream &in) {
   auto err_num = lexer.error_num() + parser.error_num() + gen.error_num();
   if (err_num) exit(err_num);
   // dump generated IRs
-  gen.Dump(cout);
+  gen.Dump(os);
 }
 
 int main(int argc, const char *argv[]) {
   // read file from command line argument
-  if (argc < 2) return 1;
+  if (argc < 2) {
+    cerr << "usage: " << argv[0] << " <INPUT> [-c [-o <OUTPUT>]]"
+         << std::endl;
+    return 1;
+  }
   ifstream ifs(argv[1]);
   // check if need to compile the input file
   if (argc >= 3 && !strcmp(argv[2], "-c")) {
-    Compile(ifs);
+    // initialize output stream
+    if (argc >= 5 && !strcmp(argv[3], "-o")) {
+      ofstream ofs(argv[4]);
+      Compile(ifs, ofs);
+    }
+    else {
+      Compile(ifs, cout);
+    }
   }
   else {
     Interpret(ifs);
