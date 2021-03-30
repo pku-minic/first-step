@@ -35,10 +35,6 @@ class Lexer {
  private:
   // read next character
   void NextChar() { in_ >> last_char_; }
-  // check if is end of line
-  bool IsEOL() {
-    return in_.eof() || last_char_ == '\n' || last_char_ == '\r';
-  }
 
   // print error message to stderr
   Token LogError(std::string_view message);

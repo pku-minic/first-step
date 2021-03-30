@@ -41,7 +41,7 @@ Token Lexer::HandleId() {
   do {
     id += last_char_;
     NextChar();
-  } while (!IsEOL() && (std::isalnum(last_char_) || last_char_ == '_'));
+  } while (!in_.eof() && (std::isalnum(last_char_) || last_char_ == '_'));
   // check if string is keyword
   int index = GetIndex(id, kKeywords);
   if (index < 0) {
@@ -60,7 +60,7 @@ Token Lexer::HandleInteger() {
   do {
     num += last_char_;
     NextChar();
-  } while (!IsEOL() && std::isdigit(last_char_));
+  } while (!in_.eof() && std::isdigit(last_char_));
   // try to convert to integer
   char *end_pos;
   int_val_ = std::strtol(num.c_str(), &end_pos, 10);
@@ -74,7 +74,7 @@ Token Lexer::HandleOperator() {
   do {
     op += last_char_;
     NextChar();
-  } while (!IsEOL() && IsOperatorChar(last_char_));
+  } while (!in_.eof() && IsOperatorChar(last_char_));
   // check if operator is valid
   int index = GetIndex(op, kOperators);
   if (index < 0) return LogError("invalid operator");
@@ -83,24 +83,18 @@ Token Lexer::HandleOperator() {
 }
 
 Token Lexer::HandleComment() {
-  // eat '#'
-  NextChar();
-  while (!IsEOL()) NextChar();
-  return NextToken();
-}
-
-Token Lexer::HandleEOL() {
-  do {
+  // skip the current line
+  while (!in_.eof() && last_char_ != '\n' && last_char_ != '\r') {
     NextChar();
-  } while (IsEOL() && !in_.eof());
+  }
   return NextToken();
 }
 
 Token Lexer::NextToken() {
+  // skip spaces
+  while (!in_.eof() && std::isspace(last_char_)) NextChar();
   // end of file
   if (in_.eof()) return Token::End;
-  // skip spaces
-  while (!IsEOL() && std::isspace(last_char_)) NextChar();
   // skip comments
   if (last_char_ == '#') return HandleComment();
   // id or keyword
@@ -109,8 +103,6 @@ Token Lexer::NextToken() {
   if (std::isdigit(last_char_)) return HandleInteger();
   // operator or id
   if (IsOperatorChar(last_char_)) return HandleOperator();
-  // end of line
-  if (IsEOL()) return HandleEOL();
   // other characters
   other_val_ = last_char_;
   NextChar();
