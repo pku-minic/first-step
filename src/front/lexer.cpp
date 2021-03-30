@@ -101,7 +101,7 @@ Token Lexer::NextToken() {
   if (std::isalpha(last_char_) || last_char_ == '_') return HandleId();
   // number
   if (std::isdigit(last_char_)) return HandleInteger();
-  // operator or id
+  // operator
   if (IsOperatorChar(last_char_)) return HandleOperator();
   // other characters
   other_val_ = last_char_;
