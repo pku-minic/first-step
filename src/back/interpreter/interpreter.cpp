@@ -24,7 +24,7 @@ std::optional<int> Interpreter::CallLibFunction(std::string_view name,
     std::cin >> ret;
     return ret;
   }
-  else if (name == "print" && args.size() == 1) {
+  else if (name == "print") {
     // check arguments
     if (args.size() != 1) return LogError("argument count mismatch");
     // evaluate argument
@@ -123,7 +123,7 @@ std::optional<int> Interpreter::EvalOn(const AssignAST &ast) {
       break;
     }
     // do not cross the boundary of function
-    if (envs->GetItem(kRetVal)) break;
+    if (envs->GetItem(kRetVal, false)) break;
     envs = envs->outer();
   }
   // check if success
